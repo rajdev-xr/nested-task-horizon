@@ -11,7 +11,7 @@ const convertDatabaseTaskToTask = (dbTask: DatabaseTask): Task => ({
   title: dbTask.title,
   description: dbTask.description || '',
   dueDate: dbTask.due_date ? new Date(dbTask.due_date) : null,
-  weight: Math.min(Math.max(dbTask.weight, 1), 5) as 1 | 2 | 3 | 4 | 5, // Ensure weight is within valid range
+  weight: Math.min(Math.max(dbTask.weight, 1), 5) as 1 | 2 | 3 | 4 | 5,
   completed: dbTask.completed,
   parentId: dbTask.parent_task_id,
   subtasks: [],
@@ -20,6 +20,32 @@ const convertDatabaseTaskToTask = (dbTask: DatabaseTask): Task => ({
   userId: dbTask.user_id,
   order: dbTask.order_position,
 });
+
+const buildHierarchy = (tasks: Task[]): Task[] => {
+  const taskMap = new Map<string, Task>();
+  const rootTasks: Task[] = [];
+
+  // First pass: create all tasks and put them in the map
+  tasks.forEach(task => {
+    taskMap.set(task.id, { ...task, subtasks: [] });
+  });
+
+  // Second pass: build the hierarchy
+  tasks.forEach(task => {
+    const taskWithSubtasks = taskMap.get(task.id)!;
+    
+    if (task.parentId) {
+      const parent = taskMap.get(task.parentId);
+      if (parent) {
+        parent.subtasks.push(taskWithSubtasks);
+      }
+    } else {
+      rootTasks.push(taskWithSubtasks);
+    }
+  });
+
+  return rootTasks;
+};
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -38,7 +64,8 @@ export const useTasks = () => {
       if (error) throw error;
 
       const convertedTasks = data.map(convertDatabaseTaskToTask);
-      setTasks(convertedTasks);
+      const hierarchicalTasks = buildHierarchy(convertedTasks);
+      setTasks(hierarchicalTasks);
     } catch (error: any) {
       console.error('Error fetching tasks:', error);
       toast({
@@ -55,28 +82,52 @@ export const useTasks = () => {
     if (!user) return;
 
     try {
+      // If creating a subtask, inherit parent's due date and weight if not specified
+      let inheritedData = { ...taskData };
+      
+      if (parentId) {
+        // Find parent task to inherit properties
+        const findParentTask = (tasks: Task[]): Task | null => {
+          for (const task of tasks) {
+            if (task.id === parentId) return task;
+            const found = findParentTask(task.subtasks);
+            if (found) return found;
+          }
+          return null;
+        };
+        
+        const parentTask = findParentTask(tasks);
+        if (parentTask) {
+          inheritedData = {
+            ...taskData,
+            dueDate: taskData.dueDate || parentTask.dueDate,
+            weight: taskData.weight || parentTask.weight,
+          };
+        }
+      }
+
       const { data, error } = await supabase
         .from('tasks')
         .insert([{
           user_id: user.id,
-          title: taskData.title,
-          description: taskData.description || null,
-          due_date: taskData.dueDate?.toISOString() || null,
-          weight: taskData.weight,
-          parent_task_id: parentId || taskData.parentId || null,
-          order_position: tasks.length,
+          title: inheritedData.title,
+          description: inheritedData.description || null,
+          due_date: inheritedData.dueDate?.toISOString() || null,
+          weight: inheritedData.weight,
+          parent_task_id: parentId || null,
+          order_position: 0, // Will be handled by reordering
         }])
         .select()
         .single();
 
       if (error) throw error;
 
-      const newTask = convertDatabaseTaskToTask(data);
-      setTasks(prev => [...prev, newTask]);
+      // Refresh tasks to get updated hierarchy
+      await fetchTasks();
       
       toast({
         title: "Task created successfully!",
-        description: `"${taskData.title}" has been added to your task list.`,
+        description: `"${inheritedData.title}" has been added${parentId ? ' as a subtask' : ''}.`,
       });
     } catch (error: any) {
       console.error('Error creating task:', error);
@@ -106,10 +157,7 @@ export const useTasks = () => {
 
       if (error) throw error;
 
-      const updatedTask = convertDatabaseTaskToTask(data);
-      setTasks(prev => prev.map(task => 
-        task.id === taskId ? updatedTask : task
-      ));
+      await fetchTasks();
       
       toast({
         title: "Task updated successfully!",
@@ -126,10 +174,22 @@ export const useTasks = () => {
   };
 
   const toggleTaskComplete = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || !user) return;
+    if (!user) return;
 
     try {
+      // Find the task in the hierarchy
+      const findTask = (tasks: Task[]): Task | null => {
+        for (const task of tasks) {
+          if (task.id === taskId) return task;
+          const found = findTask(task.subtasks);
+          if (found) return found;
+        }
+        return null;
+      };
+      
+      const task = findTask(tasks);
+      if (!task) return;
+
       const { error } = await supabase
         .from('tasks')
         .update({ completed: !task.completed })
@@ -137,9 +197,24 @@ export const useTasks = () => {
 
       if (error) throw error;
 
-      setTasks(prev => prev.map(t => 
-        t.id === taskId ? { ...t, completed: !t.completed } : t
-      ));
+      // Check if we should auto-complete parent when all subtasks are done
+      if (!task.completed && task.parentId) {
+        const parentTask = findTask(tasks);
+        if (parentTask) {
+          const allSubtasksCompleted = parentTask.subtasks.every(subtask => 
+            subtask.id === taskId || subtask.completed
+          );
+          
+          if (allSubtasksCompleted) {
+            await supabase
+              .from('tasks')
+              .update({ completed: true })
+              .eq('id', task.parentId);
+          }
+        }
+      }
+
+      await fetchTasks();
     } catch (error: any) {
       console.error('Error toggling task:', error);
       toast({
@@ -151,10 +226,21 @@ export const useTasks = () => {
   };
 
   const deleteTask = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
     if (!user) return;
 
     try {
+      // Find the task in the hierarchy
+      const findTask = (tasks: Task[]): Task | null => {
+        for (const task of tasks) {
+          if (task.id === taskId) return task;
+          const found = findTask(task.subtasks);
+          if (found) return found;
+        }
+        return null;
+      };
+      
+      const task = findTask(tasks);
+
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -162,7 +248,7 @@ export const useTasks = () => {
 
       if (error) throw error;
 
-      setTasks(prev => prev.filter(t => t.id !== taskId && t.parentId !== taskId));
+      await fetchTasks();
       
       if (task) {
         toast({
@@ -196,11 +282,7 @@ export const useTasks = () => {
           .eq('id', update.id);
       }
 
-      // Update local state
-      setTasks(prev => prev.map(task => {
-        const newIndex = taskIds.indexOf(task.id);
-        return newIndex !== -1 ? { ...task, order: newIndex } : task;
-      }));
+      await fetchTasks();
     } catch (error: any) {
       console.error('Error reordering tasks:', error);
       toast({

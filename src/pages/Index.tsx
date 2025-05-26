@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { Plus, List, Calendar as CalendarIcon, Settings, LogOut } from 'lucide-react';
+import { Plus, List, Calendar as CalendarIcon, Settings, LogOut, CheckCircle } from 'lucide-react';
 import { ViewMode, Task, TaskFormData } from '../types/task';
 import { buildTaskHierarchy, sortTasksByPriority } from '../utils/taskUtils';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import TaskFormModal from '../components/TaskFormModal';
 import UrgentTasksPanel from '../components/UrgentTasksPanel';
 import CalendarView from '../components/CalendarView';
@@ -23,12 +24,16 @@ const Index = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   // Use task notifications hook
   useTaskNotifications(tasks);
 
-  const hierarchicalTasks = buildTaskHierarchy(tasks);
-  const sortedTasks = sortTasksByPriority(hierarchicalTasks);
+  // Separate active and completed tasks
+  const activeTasks = tasks.filter(task => !task.completed);
+  const completedTasks = tasks.filter(task => task.completed);
+  
+  const sortedActiveTasks = sortTasksByPriority(activeTasks);
 
   const handleCreateTask = async (data: TaskFormData) => {
     await createTask({
@@ -51,7 +56,7 @@ const Index = () => {
   };
 
   const handleReorderTasks = async (oldIndex: number, newIndex: number) => {
-    const reorderedTasks = [...sortedTasks];
+    const reorderedTasks = [...sortedActiveTasks];
     const [movedTask] = reorderedTasks.splice(oldIndex, 1);
     reorderedTasks.splice(newIndex, 0, movedTask);
     
@@ -182,7 +187,7 @@ const Index = () => {
           </div>
         ) : (
           <>
-            <UrgentTasksPanel tasks={tasks} onTaskClick={handleTaskClick} />
+            <UrgentTasksPanel tasks={[...activeTasks, ...completedTasks]} onTaskClick={handleTaskClick} />
             
             <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
               <TabsList className="grid w-full max-w-[400px] grid-cols-2">
@@ -201,11 +206,11 @@ const Index = () => {
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold">Your Tasks</h2>
                     <div className="text-sm text-gray-500">
-                      {tasks.filter(t => !t.completed).length} active • {tasks.filter(t => t.completed).length} completed
+                      {activeTasks.length} active • {completedTasks.length} completed
                     </div>
                   </div>
                   
-                  {sortedTasks.length === 0 ? (
+                  {sortedActiveTasks.length === 0 && completedTasks.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                         <List className="w-8 h-8 text-gray-400" />
@@ -218,21 +223,78 @@ const Index = () => {
                       </Button>
                     </div>
                   ) : (
-                    <DraggableTaskList
-                      tasks={sortedTasks}
-                      onReorder={handleReorderTasks}
-                      onToggleComplete={toggleTaskComplete}
-                      onEdit={handleTaskClick}
-                      onDelete={deleteTask}
-                      onAddSubtask={handleAddSubtask}
-                    />
+                    <div className="space-y-6">
+                      {/* Active Tasks */}
+                      {sortedActiveTasks.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-medium mb-4">Active Tasks</h3>
+                          <DraggableTaskList
+                            tasks={sortedActiveTasks}
+                            onReorder={handleReorderTasks}
+                            onToggleComplete={toggleTaskComplete}
+                            onEdit={handleTaskClick}
+                            onDelete={deleteTask}
+                            onAddSubtask={handleAddSubtask}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Completed Tasks */}
+                      {completedTasks.length > 0 && (
+                        <Collapsible open={showCompleted} onOpenChange={setShowCompleted}>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" className="w-full justify-start p-0 h-auto">
+                              <div className="flex items-center space-x-2">
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                <span className="text-lg font-medium">Completed Tasks ({completedTasks.length})</span>
+                              </div>
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-4">
+                            <div className="space-y-3">
+                              {completedTasks.map((task) => (
+                                <div key={task.id} className="opacity-75">
+                                  {/* Render completed tasks without drag functionality */}
+                                  <div className="border-l-4 border-l-gray-300 bg-gray-50 rounded-lg p-4">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-start space-x-3 flex-1">
+                                        <input
+                                          type="checkbox"
+                                          checked={true}
+                                          onChange={() => toggleTaskComplete(task.id)}
+                                          className="mt-1"
+                                        />
+                                        <div>
+                                          <h4 className="font-medium text-gray-500 line-through">{task.title}</h4>
+                                          {task.description && (
+                                            <p className="text-sm text-gray-400 mt-1">{task.description}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => deleteTask(task.id)}
+                                        className="text-red-500 hover:text-red-700"
+                                      >
+                                        Delete
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+                    </div>
                   )}
                 </div>
               </TabsContent>
               
               <TabsContent value="calendar" className="mt-6">
                 <CalendarView
-                  tasks={tasks}
+                  tasks={[...activeTasks, ...completedTasks]}
                   onTaskClick={handleTaskClick}
                   onAddTask={handleAddTaskForDate}
                 />
