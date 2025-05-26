@@ -9,13 +9,132 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      tasks: {
+        Row: {
+          completed: boolean
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          order_position: number
+          parent_task_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_position?: number
+          parent_task_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          weight?: number
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_position?: number
+          parent_task_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "urgent_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      urgent_tasks: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          order_position: number | null
+          parent_task_id: string | null
+          priority_score: number | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+          weight: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "urgent_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      calculate_priority_score: {
+        Args: { task_weight: number; task_due_date: string }
+        Returns: number
+      }
+      get_task_hierarchy: {
+        Args: { user_uuid: string }
+        Returns: {
+          id: string
+          user_id: string
+          title: string
+          description: string
+          due_date: string
+          weight: number
+          parent_task_id: string
+          completed: boolean
+          order_position: number
+          created_at: string
+          updated_at: string
+          priority_score: number
+          level: number
+          path: string
+        }[]
+      }
+      get_upcoming_tasks: {
+        Args: { user_uuid: string }
+        Returns: {
+          id: string
+          title: string
+          due_date: string
+          weight: number
+          days_until_due: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

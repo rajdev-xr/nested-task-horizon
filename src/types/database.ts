@@ -1,0 +1,20 @@
+
+export interface DatabaseTask {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  weight: 1 | 2 | 3 | 4 | 5;
+  parent_task_id: string | null;
+  completed: boolean;
+  order_position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskWithPriority extends DatabaseTask {
+  priority_score: number;
+  level?: number;
+  path?: string;
+}
