@@ -11,7 +11,7 @@ const convertDatabaseTaskToTask = (dbTask: DatabaseTask): Task => ({
   title: dbTask.title,
   description: dbTask.description || '',
   dueDate: dbTask.due_date ? new Date(dbTask.due_date) : null,
-  weight: dbTask.weight,
+  weight: Math.min(Math.max(dbTask.weight, 1), 5) as 1 | 2 | 3 | 4 | 5, // Ensure weight is within valid range
   completed: dbTask.completed,
   parentId: dbTask.parent_task_id,
   subtasks: [],

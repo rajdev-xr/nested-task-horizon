@@ -5,7 +5,7 @@ export interface DatabaseTask {
   title: string;
   description: string | null;
   due_date: string | null;
-  weight: 1 | 2 | 3 | 4 | 5;
+  weight: number; // Changed from union type to number since DB returns number
   parent_task_id: string | null;
   completed: boolean;
   order_position: number;
