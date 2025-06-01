@@ -86,7 +86,9 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg mx-auto mb-4"></div>
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg mx-auto mb-4 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">TF</span>
+          </div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -102,10 +104,10 @@ const Index = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">TP</span>
+                  <span className="text-white font-bold text-sm">TF</span>
                 </div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                  TaskPal
+                  TaskForge
                 </h1>
                 <span className="text-sm text-gray-500 hidden sm:inline">Smart To-Do List</span>
               </div>
@@ -120,7 +122,7 @@ const Index = () => {
         {/* Welcome Content */}
         <main className="max-w-4xl mx-auto px-4 py-16 text-center">
           <h2 className="text-4xl font-bold text-gray-900 mb-6">
-            Welcome to TaskPal
+            Welcome to TaskForge
           </h2>
           <p className="text-xl text-gray-600 mb-8">
             Your intelligent task management companion with smart priority scoring and nested subtasks
@@ -150,10 +152,10 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">TP</span>
+                <span className="text-white font-bold text-sm">TF</span>
               </div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                TaskPal
+                TaskForge
               </h1>
               <span className="text-sm text-gray-500 hidden sm:inline">Smart To-Do List</span>
             </div>
