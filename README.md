@@ -1,74 +1,62 @@
+# TaskForge – Smart To-Do List with Priority-Based Focus
 
-# Welcome to your Lovable project
+**TaskForge** is a minimalist task management app built for individuals who want to manage their daily workload with clarity and smart prioritization. Designed for speed and usability, it helps users focus on what matters most.
 
-## Project info
+## 🚀 Features
 
-**URL**: https://lovable.dev/projects/e0a831a7-1dfe-4658-b989-f1ef6a3e70d8
+✅ **Email Authentication**  
+Secure login with Supabase Auth – your data stays private and scoped to your account.
 
-## How can I edit this code?
+✅ **Task Management**  
+Create, edit, and delete tasks with essential metadata:
+- 📌 Title
+- 📃 Description
+- 📅 Due Date
+- 📊 Weight (Importance: 1–5)
 
-There are several ways of editing your application.
+✅ **Priority Score Calculation**  
+Tasks are scored based on a combination of urgency and importance.  
+Formula: `Score = Weight / Days Until Due`  
+Used to dynamically rank tasks in the list.
 
-**Use Lovable**
+✅ **List View**  
+- Tasks sorted by descending priority score.
+- Clean and minimal interface for task focus.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e0a831a7-1dfe-4658-b989-f1ef6a3e70d8) and start prompting.
+✅ **Calendar View**  
+Visualize task deadlines on a monthly calendar.
 
-Changes made via Lovable will be committed automatically to this repo.
+✅ **Daily Notifications**  
+- In-app reminders for tasks due **today** or **tomorrow** via toast alerts.
 
-**Use your preferred IDE**
+## 🔧 Upcoming Features (Planned, Not Yet Implemented)
+- [ ] Subtask Nesting (Hierarchical task breakdown)
+- [ ] Google Calendar Integration
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+> These features are part of the future roadmap and are not yet available in the current version.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠 Tech Stack
 
-Follow these steps:
+- **Frontend:** React, Vite, Tailwind CSS
+- **Backend:** Supabase (PostgreSQL, Auth)
+- **UI Library:** shadcn/ui
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 📦 Folder Structure (Simplified)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+taskforge/
+├── src/
+│ ├── pages/
+│ ├── components/
+│ └── lib/
+├── supabase/
+└── tailwind.config.ts
 
-# Step 3: Install the necessary dependencies.
-npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 📸 Live Demo  
+🔗 [View the live app](https://your-vercel-link-here.vercel.app)
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🧠 Inspiration  
+Originally inspired by productivity systems like Eisenhower Matrix and Bullet Journal. TaskForge brings that clarity into a smart, simple, and elegant tool.
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/e0a831a7-1dfe-4658-b989-f1ef6a3e70d8) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
